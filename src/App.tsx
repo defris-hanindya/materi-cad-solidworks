@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   Cog,
   BookOpen,
@@ -10,7 +10,6 @@ import {
   Users,
   Award,
   ChevronDown,
-  ChevronUp,
   Calendar,
   ClipboardList,
   FileCheck,
@@ -18,6 +17,8 @@ import {
   Copy,
   Check,
   ArrowUp,
+  GraduationCap,
+  Zap,
 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -27,7 +28,7 @@ import { Separator } from "@/components/ui/separator"
 import "./index.css"
 
 /* ========================================================================== */
-/*  DATA — RPS                                                                */
+/*  DATA                                                                       */
 /* ========================================================================== */
 
 const identitasMK = [
@@ -43,23 +44,31 @@ const identitasMK = [
 const cpmkList = [
   {
     id: "CPMK-1",
+    icon: Award,
     title: "Tanggung Jawab Mandiri",
     desc: "Bertanggung jawab dalam membuat gambar komponen mesin secara mandiri sesuai standar industri.",
+    color: "blue",
   },
   {
     id: "CPMK-2",
+    icon: Target,
     title: "Prinsip Gambar Teknik",
     desc: "Menguasai prinsip dasar gambar teknik mesin dan menerapkannya dalam gambar kerja manufacturing drawing.",
+    color: "cyan",
   },
   {
     id: "CPMK-3",
+    icon: Cog,
     title: "Rancangan Manufaktur",
     desc: "Membuat rancangan gambar manufaktur yang memenuhi standar produksi dan proses pemesinan.",
+    color: "emerald",
   },
   {
     id: "CPMK-4",
+    icon: FileCheck,
     title: "Gambar Kerja Produksi",
     desc: "Membuat rancangan gambar kerja manufaktur untuk pemesinan, pengecoran, dan fabrikasi.",
+    color: "violet",
   },
 ]
 
@@ -281,22 +290,45 @@ const caraMenggunakan = [
 /*  COMPONENTS                                                                 */
 /* ========================================================================== */
 
-function SectionHeading({ icon: Icon, children }: { icon: React.ElementType; children: React.ReactNode }) {
+const colorMap: Record<string, string> = {
+  blue: "bg-blue-50 text-blue-700 border-blue-200",
+  cyan: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  violet: "bg-violet-50 text-violet-700 border-violet-200",
+}
+
+const colorMapDot: Record<string, string> = {
+  blue: "bg-blue-600",
+  cyan: "bg-cyan-600",
+  emerald: "bg-emerald-600",
+  violet: "bg-violet-600",
+}
+
+function SectionHeading({ icon: Icon, children, accent = "blue" }: { icon: React.ElementType; children: React.ReactNode; accent?: string }) {
+  const dot = colorMapDot[accent] || "bg-blue-600"
   return (
-    <div className="flex items-center gap-3 mb-8">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
-        <Icon className="h-5 w-5" />
+    <div className="flex items-center gap-4 mb-10">
+      <div className="relative">
+        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${colorMap[accent].split(" ")[0]} ${colorMap[accent].split(" ")[1]}`}>
+          <Icon className="h-6 w-6" />
+        </div>
+        <div className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full ${dot} ring-2 ring-white`} />
       </div>
-      <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{children}</h2>
+      <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{children}</h2>
     </div>
   )
 }
 
 function ProgressBar({ value, color = "blue" }: { value: number; color?: "blue" | "emerald" }) {
-  const c = color === "emerald" ? "bg-emerald-500" : "bg-blue-600"
+  const c = color === "emerald" ? "from-emerald-400 to-emerald-600" : "from-blue-400 to-blue-600"
   return (
-    <div className="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden">
-      <div className={`h-full rounded-full ${c} transition-all duration-1000`} style={{ width: `${value}%` }} />
+    <div className="w-full h-3 rounded-full bg-slate-100 overflow-hidden shadow-inner">
+      <div
+        className={`h-full rounded-full bg-gradient-to-r ${c} transition-all duration-1000 relative overflow-hidden`}
+        style={{ width: `${value}%` }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
+      </div>
     </div>
   )
 }
@@ -306,7 +338,7 @@ function ProgressBar({ value, color = "blue" }: { value: number; color?: "blue" 
 /* ========================================================================== */
 
 export default function App() {
-  const [expandedWeeks, setExpandedWeeks] = useState<Set<string>>(new Set())
+  const [expandedWeeks, setExpandedWeeks] = useState<Set<string>>(new Set(["Minggu 1"]))
   const [copied, setCopied] = useState(false)
   const [showBackTop, setShowBackTop] = useState(false)
 
@@ -331,71 +363,123 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-slate-700 font-sans antialiased scroll-smooth">
+    <div className="min-h-screen bg-white text-slate-700 font-sans antialiased scroll-smooth selection:bg-blue-100 selection:text-blue-900">
 
       {/* ================================================================ */}
       {/*  NAVBAR                                                          */}
       {/* ================================================================ */}
 
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
+      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/60">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-700 text-white">
-              <Cog className="h-4 w-4" />
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-blue-800 text-white shadow-md shadow-blue-200">
+              <Cog className="h-4.5 w-4.5" />
             </div>
             <div className="hidden sm:block">
-              <div className="text-sm font-semibold text-slate-900 leading-tight">Gambar Mesin — CAD SolidWorks</div>
-              <div className="text-xs text-slate-500 leading-tight">MES6214 · 2 SKS · PTM Unimed</div>
+              <div className="text-sm font-bold text-slate-900 leading-tight">Gambar Mesin</div>
+              <div className="text-xs text-slate-500 leading-tight">CAD SolidWorks · PTM Unimed</div>
             </div>
           </div>
-          <nav className="flex items-center gap-4 text-xs sm:text-sm">
+          <nav className="flex items-center gap-4 text-xs font-medium sm:text-sm">
             <a href="#identitas" className="text-slate-600 hover:text-blue-700 transition-colors hidden md:inline">Identitas</a>
             <a href="#cpmk" className="text-slate-600 hover:text-blue-700 transition-colors hidden md:inline">CPMK</a>
             <a href="#roadmap" className="text-slate-600 hover:text-blue-700 transition-colors">Roadmap</a>
             <a href="#penilaian" className="text-slate-600 hover:text-blue-700 transition-colors hidden md:inline">Penilaian</a>
-            <Badge className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-0 text-xs">MES6214</Badge>
+            <Badge className="bg-blue-600 text-white hover:bg-blue-700 border-0 text-xs shadow-sm">MES6214</Badge>
           </nav>
         </div>
       </header>
 
       {/* ================================================================ */}
-      {/*  1. HERO                                                         */}
+      {/*  1. HERO  — BOLD & PREMIUM                                       */}
       {/* ================================================================ */}
 
-      <section className="relative bg-slate-900 overflow-hidden">
-        {/* Blueprint grid pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.05)_1px,transparent_1px)] bg-[size:64px_64px]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_50%)]" />
+      <section className="relative bg-slate-950 overflow-hidden">
+        {/* Dramatic background layers */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(59,130,246,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.06)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_80%_60%_at_50%_0%,black_40%,transparent_70%)]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[120px] opacity-60" />
+        <div className="absolute top-20 right-0 w-[300px] h-[400px] bg-cyan-500/10 rounded-full blur-[100px] opacity-50" />
+        <div className="absolute bottom-0 left-0 w-[250px] h-[300px] bg-blue-400/10 rounded-full blur-[80px] opacity-40" />
 
-        <div className="relative mx-auto max-w-4xl px-6 py-20 sm:py-32 text-center">
-          <div className="flex flex-wrap justify-center gap-2 mb-6">
-            <Badge className="bg-blue-600/30 text-blue-200 border-0 text-xs">MES6214</Badge>
-            <Badge className="bg-blue-600/20 text-blue-200 border-0 text-xs">2 SKS Praktik</Badge>
-            <Badge className="bg-blue-600/20 text-blue-200 border-0 text-xs">Semester 3</Badge>
-            <Badge className="bg-blue-600/20 text-blue-200 border-0 text-xs">SolidWorks</Badge>
-          </div>
+        {/* Geometric accent lines */}
+        <svg className="absolute top-0 right-0 w-64 h-64 opacity-10 text-blue-400" viewBox="0 0 256 256">
+          <circle cx="200" cy="56" r="40" fill="none" stroke="currentColor" strokeWidth="1" />
+          <circle cx="200" cy="56" r="80" fill="none" stroke="currentColor" strokeWidth="0.5" />
+          <circle cx="200" cy="56" r="120" fill="none" stroke="currentColor" strokeWidth="0.3" />
+          <line x1="56" y1="200" x2="200" y2="56" stroke="currentColor" strokeWidth="0.5" />
+          <line x1="0" y1="200" x2="144" y2="56" stroke="currentColor" strokeWidth="0.3" />
+        </svg>
 
-          <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl leading-tight">
-            Gambar Mesin Berbasis CAD{" "}
-            <span className="block text-blue-400">dengan SolidWorks</span>
-          </h1>
+        <div className="relative mx-auto max-w-4xl px-6 py-24 sm:py-36 text-center">
+          {/* Floating badge cluster */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-wrap justify-center gap-2 mb-8"
+          >
+            {["MES6214", "2 SKS Praktik", "Semester 3", "SolidWorks"].map((b, i) => (
+              <Badge key={i}
+                className={`text-xs font-medium border-0 px-3.5 py-1.5 ${
+                  i === 0 ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30" : "bg-white/10 text-blue-100 backdrop-blur-sm"
+                }`}
+              >
+                {b}
+              </Badge>
+            ))}
+          </motion.div>
 
-          <p className="mt-6 max-w-2xl mx-auto text-base sm:text-lg leading-relaxed text-slate-300">
-            Website materi perkuliahan untuk membantu mahasiswa Pendidikan Teknik Mesin
-            memahami gambar kerja manufaktur, pemodelan CAD, penyajian gambar teknik,
-            dan proyek gambar kerja berbasis SolidWorks.
-          </p>
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.1 }}
+            className="text-4xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl leading-[1.05]"
+          >
+            Gambar Mesin{" "}
+            <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-blue-400 bg-clip-text text-transparent">
+              SolidWorks
+            </span>
+          </motion.h1>
 
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <a href="#roadmap" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors">
-              <Calendar className="h-4 w-4" />
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.25 }}
+            className="mt-8 max-w-2xl mx-auto text-base sm:text-xl leading-relaxed text-slate-300 font-medium"
+          >
+            Website materi perkuliahan untuk mahasiswa{" "}
+            <span className="text-white font-semibold">Pendidikan Teknik Mesin</span> —
+            memahami gambar kerja manufaktur, pemodelan CAD, dan proyek gambar teknik
+            berbasis SolidWorks.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="mt-10 flex flex-wrap justify-center gap-3"
+          >
+            <a href="#roadmap"
+              className="group inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40 hover:-translate-y-0.5 transition-all duration-300"
+            >
+              <Calendar className="h-4.5 w-4.5" />
               Lihat Alur Pertemuan
+              <ChevronDown className="h-4 w-4 group-hover:translate-y-0.5 transition-transform" />
             </a>
-            <a href="#penilaian" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg border border-slate-600 text-slate-200 text-sm font-medium hover:border-slate-500 hover:bg-slate-800 transition-colors">
-              <Award className="h-4 w-4" />
-              Lihat Sistem Penilaian
+            <a href="#penilaian"
+              className="group inline-flex items-center gap-2.5 px-6 py-3 rounded-xl border-2 border-white/20 text-white text-sm font-semibold hover:border-white/40 hover:bg-white/5 hover:-translate-y-0.5 transition-all duration-300"
+            >
+              <Award className="h-4.5 w-4.5" />
+              Sistem Penilaian
             </a>
-          </div>
+          </motion.div>
+        </div>
+
+        {/* Wave bottom */}
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" className="w-full h-16 sm:h-20">
+            <path d="M0 80V40C240 8 480 0 720 30C960 60 1200 60 1440 30V80H0Z" fill="white" />
+          </svg>
         </div>
       </section>
 
@@ -403,23 +487,24 @@ export default function App() {
       {/*  MAIN CONTENT                                                    */}
       {/* ================================================================ */}
 
-      <main className="mx-auto max-w-4xl px-6 py-16 space-y-20">
+      <main className="mx-auto max-w-4xl px-6 pt-12 pb-16 space-y-24">
 
         {/* ============================================================ */}
-        {/*  2. IDENTITAS MATA KULIAH                                     */}
+        {/*  2. IDENTITAS MATA KULIAH — ELEVATED CARDS                    */}
         {/* ============================================================ */}
 
         <motion.section id="identitas"
-          initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}
+          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
         >
-          <SectionHeading icon={BookOpen}>Identitas Mata Kuliah</SectionHeading>
-          <Card className="border-slate-200 shadow-none bg-slate-50/50">
-            <CardContent className="pt-6">
-              <div className="grid gap-4 sm:grid-cols-2">
+          <SectionHeading icon={BookOpen} accent="blue">Identitas Mata Kuliah</SectionHeading>
+          <Card className="border-slate-200 shadow-lg shadow-slate-100 overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-cyan-500" />
+            <CardContent className="pt-8">
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
                 {identitasMK.map((item, i) => (
-                  <div key={i} className={item.label === "Dosen Pengampu" ? "sm:col-span-2" : ""}>
-                    <div className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-0.5">{item.label}</div>
-                    <div className="text-sm text-slate-900 font-medium whitespace-pre-line">{item.value}</div>
+                  <div key={i} className={item.label === "Dosen Pengampu" ? "sm:col-span-2 lg:col-span-4" : ""}>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-1.5">{item.label}</div>
+                    <div className="text-sm text-slate-800 font-semibold whitespace-pre-line leading-relaxed">{item.value}</div>
                   </div>
                 ))}
               </div>
@@ -428,172 +513,199 @@ export default function App() {
         </motion.section>
 
         {/* ============================================================ */}
-        {/*  3. DESKRIPSI MATA KULIAH                                     */}
+        {/*  3. DESKRIPSI + CPMK — SIDE BY SIDE (DESKTOP)                */}
         {/* ============================================================ */}
 
         <motion.section
-          initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}
+          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
         >
-          <SectionHeading icon={ClipboardList}>Deskripsi Mata Kuliah</SectionHeading>
-          <Card className="border-slate-200 shadow-none">
-            <CardContent className="pt-6">
+          <SectionHeading icon={ClipboardList} accent="cyan">Deskripsi Mata Kuliah</SectionHeading>
+          <Card className="border-slate-200 shadow-lg shadow-slate-100 overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 to-blue-500" />
+            <CardContent className="pt-8">
               <p className="text-base leading-relaxed text-slate-600 sm:text-lg">
-                Mata kuliah <strong className="text-slate-900">Gambar Mesin (MES6214)</strong>{" "}
-                merupakan mata kuliah praktik 2 SKS yang membekali mahasiswa Pendidikan
-                Teknik Mesin dengan kemampuan membaca dan membuat{" "}
-                <strong className="text-slate-900">gambar kerja manufaktur</strong>{" "}
-                (manufacturing drawing) sesuai standar industri. Mahasiswa akan belajar:
+                <strong className="text-slate-900">Gambar Mesin (MES6214)</strong>{" "}
+                adalah mata kuliah praktik 2 SKS yang membekali mahasiswa{" "}
+                <strong className="text-slate-900">Pendidikan Teknik Mesin</strong>{" "}
+                dengan kemampuan profesional dalam membaca dan membuat{" "}
+                <strong className="text-blue-700">gambar kerja manufaktur</strong> sesuai
+                standar industri. Mahasiswa menguasai alur kerja lengkap:
               </p>
-              <ul className="mt-4 space-y-2">
+              <div className="mt-6 grid gap-2.5 sm:grid-cols-2">
                 {[
-                  "Membaca dan membuat gambar kerja sesuai standar gambar teknik mesin",
-                  "Menentukan dimensi, toleransi, dan simbol pengerjaan",
-                  "Membuat gambar komponen tunggal (part drawing)",
-                  "Menyusun gambar assembly/rakitan",
-                  "Membuat gambar sheet metal dan bukaan",
-                  "Menghasilkan gambar kerja siap produksi untuk pemesinan, pengecoran, dan fabrikasi",
+                  "Membaca & membuat gambar kerja standar teknik mesin",
+                  "Dimensi, toleransi, dan simbol pengerjaan",
+                  "Gambar komponen tunggal (part drawing)",
+                  "Gambar assembly / rakitan",
+                  "Sheet metal & gambar bukaan",
+                  "Gambar kerja siap produksi untuk pemesinan & fabrikasi",
                 ].map((item, i) => (
-                  <li key={i} className="flex items-start gap-2.5 text-sm text-slate-600">
-                    <CheckCircle2 className="h-4 w-4 shrink-0 text-blue-500 mt-0.5" />
-                    <span>{item}</span>
-                  </li>
+                  <div key={i} className="flex items-center gap-3 bg-slate-50 rounded-lg px-4 py-2.5 text-sm text-slate-700 font-medium">
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                    {item}
+                  </div>
                 ))}
-              </ul>
-              <p className="mt-4 text-base leading-relaxed text-slate-600">
-                Praktik menggambar dilakukan menggunakan{" "}
-                <strong className="text-blue-700">SolidWorks</strong> sebagai
-                perangkat lunak CAD utama, mencakup sketch 2D, part modeling, assembly,
-                drawing, section view, dimensioning, dan manufacturing drawing.
+              </div>
+              <p className="mt-6 text-base leading-relaxed text-slate-600">
+                Software utama:{" "}
+                <strong className="text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">SolidWorks</strong>{" "}
+                — mencakup sketch 2D, part modeling, assembly, drawing, section view, dimensioning,
+                dan manufacturing drawing.
               </p>
             </CardContent>
           </Card>
         </motion.section>
 
         {/* ============================================================ */}
-        {/*  4. CPMK                                                        */}
+        {/*  4. CPMK — PREMIUM CARDS                                      */}
         {/* ============================================================ */}
 
         <motion.section id="cpmk"
-          initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}
+          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
         >
-          <SectionHeading icon={Target}>Capaian Pembelajaran (CPMK)</SectionHeading>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <SectionHeading icon={Target} accent="violet">Capaian Pembelajaran (CPMK)</SectionHeading>
+          <div className="grid gap-5 sm:grid-cols-2">
             {cpmkList.map((item, i) => (
-              <Card key={i} className="border-slate-200 shadow-none hover:border-blue-200 transition-colors">
-                <CardHeader className="pb-2">
-                  <Badge className="bg-blue-50 text-blue-700 border-0 text-xs mb-2 w-fit">{item.id}</Badge>
-                  <CardTitle className="text-base font-semibold text-slate-900">{item.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-slate-600 leading-relaxed">{item.desc}</p>
-                </CardContent>
-              </Card>
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.08 }}
+              >
+                <Card className={`h-full border-slate-200 shadow-lg shadow-slate-100 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 overflow-hidden`}>
+                  <div className={`absolute top-0 left-0 w-1.5 h-full ${colorMapDot[item.color]}`} />
+                  <CardHeader className="pb-3 pl-7">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${colorMap[item.color].split(" ")[0]} ${colorMap[item.color].split(" ")[1]}`}>
+                        <item.icon className="h-5.5 w-5.5" />
+                      </div>
+                      <Badge className={`text-xs border-0 font-bold ${colorMap[item.color].split(" ")[0]} ${colorMap[item.color].split(" ")[1]}`}>
+                        {item.id}
+                      </Badge>
+                    </div>
+                    <CardTitle className="text-base font-bold text-slate-900">{item.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pl-7">
+                    <p className="text-sm text-slate-600 leading-relaxed">{item.desc}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
           </div>
         </motion.section>
 
         {/* ============================================================ */}
-        {/*  5. ROADMAP 1 SEMESTER                                        */}
+        {/*  5. ROADMAP — PREMIUM TIMELINE                                */}
         {/* ============================================================ */}
 
         <motion.section id="roadmap"
-          initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}
+          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
         >
-          <SectionHeading icon={Calendar}>Roadmap 1 Semester</SectionHeading>
-          <p className="text-sm text-slate-500 -mt-6 mb-6">16 pertemuan — klik untuk detail</p>
+          <SectionHeading icon={Calendar} accent="blue">Roadmap 1 Semester</SectionHeading>
+          <p className="text-sm text-slate-400 font-medium -mt-8 mb-8">16 Pertemuan — klik untuk detail lengkap</p>
 
           <div className="relative">
-            {/* Vertical line */}
-            <div className="absolute left-[19px] top-3 bottom-3 w-px bg-slate-200" />
+            {/* Timeline spine */}
+            <div className="absolute left-[23px] top-0 bottom-0 w-0.5 bg-gradient-to-b from-blue-200 via-blue-300 to-blue-100" />
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               {roadmap.map((item, i) => {
                 const isExpanded = expandedWeeks.has(item.week)
                 const isExam = item.isExam
 
                 return (
-                  <div key={i} className="relative pl-12">
-                    {/* Dot */}
-                    <div className={`absolute left-[12px] top-4 w-4 h-4 rounded-full border-2 z-10 ${
-                      isExam ? "bg-amber-100 border-amber-400" : "bg-white border-blue-300"
-                    }`} />
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -16 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.35, delay: i * 0.03 }}
+                    className="relative pl-14"
+                  >
+                    {/* Timeline node */}
+                    <div className={`absolute left-[15px] top-5 w-[17px] h-[17px] rounded-full border-[3px] z-10 transition-all duration-300 ${
+                      isExpanded
+                        ? (isExam ? "border-amber-400 bg-amber-100 scale-125" : "border-blue-500 bg-blue-100 scale-125")
+                        : (isExam ? "border-amber-300 bg-amber-50" : "border-slate-300 bg-white")
+                    }`}>
+                      {isExpanded && <div className={`absolute inset-1 rounded-full ${isExam ? "bg-amber-400" : "bg-blue-500"}`} />}
+                    </div>
 
-                    <Card className={`border-slate-200 shadow-none transition-all ${
-                      isExam ? "bg-amber-50/50 border-amber-200" : "hover:border-blue-200"
+                    <Card className={`border transition-all duration-300 ${
+                      isExam
+                        ? "border-amber-200 bg-amber-50/40 shadow-md"
+                        : isExpanded
+                          ? "border-blue-200 shadow-lg shadow-blue-50"
+                          : "border-slate-200 shadow-sm hover:border-blue-200 hover:shadow-md"
                     }`}>
                       <button
                         onClick={() => toggleWeek(item.week)}
-                        className="w-full text-left p-4 flex items-start justify-between gap-3"
+                        className="w-full text-left p-4 flex items-start gap-3"
                       >
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge className={`text-xs shrink-0 ${
-                              isExam ? "bg-amber-100 text-amber-800 border-0" : "bg-slate-100 text-slate-700 border-0"
-                            }`}>{item.week}</Badge>
-                            <h3 className="text-sm font-semibold text-slate-900 truncate">{item.title}</h3>
+                          <div className="flex items-center gap-2.5 mb-1.5">
+                            <Badge className={`text-[11px] font-bold shrink-0 px-2.5 py-0.5 border-0 ${
+                              isExam
+                                ? "bg-amber-400 text-amber-900"
+                                : isExpanded
+                                  ? "bg-blue-600 text-white"
+                                  : "bg-slate-100 text-slate-600"
+                            }`}>
+                              {item.week}
+                            </Badge>
+                            <h3 className={`text-sm font-bold truncate ${isExpanded ? "text-blue-900" : "text-slate-800"}`}>
+                              {item.title}
+                            </h3>
                           </div>
                           <p className="text-xs text-slate-500 flex items-center gap-1.5">
                             <Monitor className="h-3 w-3 text-blue-400 shrink-0" />
                             <span className="truncate">{item.sw}</span>
                           </p>
                         </div>
-                        {isExpanded ? (
-                          <ChevronUp className="h-4 w-4 shrink-0 text-slate-400 mt-1" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4 shrink-0 text-slate-400 mt-1" />
-                        )}
+                        <motion.div
+                          animate={{ rotate: isExpanded ? 180 : 0 }}
+                          transition={{ duration: 0.25 }}
+                          className={`shrink-0 mt-1.5 ${isExpanded ? "text-blue-500" : "text-slate-400"}`}
+                        >
+                          <ChevronDown className="h-5 w-5" />
+                        </motion.div>
                       </button>
 
-                      {isExpanded && (
-                        <div className="px-4 pb-4 border-t border-slate-100">
-                          <div className="grid gap-3 pt-3 text-xs sm:text-sm">
-                            <div className="flex gap-2">
-                              <Target className="h-4 w-4 shrink-0 text-blue-500 mt-0.5" />
-                              <div>
-                                <span className="font-medium text-slate-700">Tujuan: </span>
-                                <span className="text-slate-600">{item.tujuan}</span>
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3, ease: "easeInOut" }}
+                            className="overflow-hidden"
+                          >
+                            <div className="px-4 pb-5 border-t border-slate-100">
+                              <div className="grid gap-3.5 pt-4">
+                                {[
+                                  { icon: Target, label: "Tujuan", value: item.tujuan },
+                                  { icon: Users, label: "Aktivitas", value: item.aktivitas },
+                                  { icon: FileCheck, label: "Output", value: item.output },
+                                  { icon: Award, label: "Penilaian", value: item.penilaian },
+                                  { icon: Clock, label: "Waktu", value: "2 × 50 menit" },
+                                  { icon: BookOpen, label: "Referensi", value: item.ref },
+                                ].map((r, j) => (
+                                  <div key={j} className="flex gap-3 text-sm">
+                                    <r.icon className="h-4 w-4 shrink-0 text-slate-400 mt-0.5" />
+                                    <div>
+                                      <span className="font-semibold text-slate-700">{r.label}</span>
+                                      <span className="text-slate-500"> — {r.value}</span>
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
                             </div>
-                            <div className="flex gap-2">
-                              <Users className="h-4 w-4 shrink-0 text-blue-500 mt-0.5" />
-                              <div>
-                                <span className="font-medium text-slate-700">Aktivitas: </span>
-                                <span className="text-slate-600">{item.aktivitas}</span>
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <FileCheck className="h-4 w-4 shrink-0 text-blue-500 mt-0.5" />
-                              <div>
-                                <span className="font-medium text-slate-700">Output: </span>
-                                <span className="text-slate-600">{item.output}</span>
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <Award className="h-4 w-4 shrink-0 text-blue-500 mt-0.5" />
-                              <div>
-                                <span className="font-medium text-slate-700">Penilaian: </span>
-                                <span className="text-slate-600">{item.penilaian}</span>
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <Clock className="h-4 w-4 shrink-0 text-blue-500 mt-0.5" />
-                              <div>
-                                <span className="font-medium text-slate-700">Waktu: </span>
-                                <span className="text-slate-600">2 × 50 menit</span>
-                              </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <BookOpen className="h-4 w-4 shrink-0 text-blue-500 mt-0.5" />
-                              <div>
-                                <span className="font-medium text-slate-700">Referensi: </span>
-                                <span className="text-slate-500">{item.ref}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </Card>
-                  </div>
+                  </motion.div>
                 )
               })}
             </div>
@@ -601,28 +713,33 @@ export default function App() {
         </motion.section>
 
         {/* ============================================================ */}
-        {/*  6. SISTEM PENILAIAN                                          */}
+        {/*  6. PENILAIAN — IMPACTFUL VISUALS                             */}
         {/* ============================================================ */}
 
         <motion.section id="penilaian"
-          initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}
+          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
         >
-          <SectionHeading icon={Award}>Sistem Penilaian</SectionHeading>
+          <SectionHeading icon={Award} accent="emerald">Sistem Penilaian</SectionHeading>
+
           <div className="grid gap-6 sm:grid-cols-2">
-            {/* Kognitif */}
-            <Card className="border-slate-200 shadow-none">
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-blue-600" />
-                  Kognitif — 50%
+            {/* Kognitif Card */}
+            <Card className="border-slate-200 shadow-lg shadow-slate-100 overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-blue-300" />
+              <CardHeader className="pb-2 pt-7">
+                <CardTitle className="text-lg font-bold flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-700 text-xl font-black">50</div>
+                  <div>
+                    <div className="text-base text-slate-900">Kognitif</div>
+                    <div className="text-xs text-slate-400 font-medium">50% dari total nilai</div>
+                  </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 pb-6">
                 {penilaianKognitif.map((item, i) => (
-                  <div key={i}>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-slate-700">{item.item}</span>
-                      <span className="font-medium text-slate-900">{item.bobot}%</span>
+                  <div key={i} className="group">
+                    <div className="flex justify-between items-baseline mb-1.5">
+                      <span className="text-sm font-semibold text-slate-700">{item.item}</span>
+                      <span className="text-lg font-black text-blue-700 tabular-nums">{item.bobot}%</span>
                     </div>
                     <ProgressBar value={item.bobot * 2} color="blue" />
                   </div>
@@ -630,20 +747,24 @@ export default function App() {
               </CardContent>
             </Card>
 
-            {/* Partisipatif */}
-            <Card className="border-slate-200 shadow-none">
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-emerald-500" />
-                  Partisipatif — 50%
+            {/* Partisipatif Card */}
+            <Card className="border-slate-200 shadow-lg shadow-slate-100 overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-emerald-300" />
+              <CardHeader className="pb-2 pt-7">
+                <CardTitle className="text-lg font-bold flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 text-xl font-black">50</div>
+                  <div>
+                    <div className="text-base text-slate-900">Partisipatif</div>
+                    <div className="text-xs text-slate-400 font-medium">50% dari total nilai</div>
+                  </div>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 pb-6">
                 {penilaianPartisipatif.map((item, i) => (
-                  <div key={i}>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-slate-700">{item.item}</span>
-                      <span className="font-medium text-slate-900">{item.bobot}%</span>
+                  <div key={i} className="group">
+                    <div className="flex justify-between items-baseline mb-1.5">
+                      <span className="text-sm font-semibold text-slate-700">{item.item}</span>
+                      <span className="text-lg font-black text-emerald-700 tabular-nums">{item.bobot}%</span>
                     </div>
                     <ProgressBar value={item.bobot * 2} color="emerald" />
                   </div>
@@ -651,6 +772,26 @@ export default function App() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Total bar */}
+          <Card className="mt-5 border-slate-200 shadow-sm bg-gradient-to-r from-blue-50 to-emerald-50">
+            <CardContent className="py-4 flex items-center justify-between">
+              <span className="text-sm font-bold text-slate-700">Total</span>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+                  <span className="text-xs text-slate-500">Kognitif 50%</span>
+                </div>
+                <span className="text-slate-300">+</span>
+                <div className="flex items-center gap-1.5">
+                  <div className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                  <span className="text-xs text-slate-500">Partisipatif 50%</span>
+                </div>
+                <Separator orientation="vertical" className="h-5 mx-1" />
+                <span className="text-lg font-black text-slate-900">100%</span>
+              </div>
+            </CardContent>
+          </Card>
         </motion.section>
 
         {/* ============================================================ */}
@@ -658,20 +799,20 @@ export default function App() {
         {/* ============================================================ */}
 
         <motion.section
-          initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}
+          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
         >
-          <SectionHeading icon={BookOpen}>Referensi</SectionHeading>
+          <SectionHeading icon={BookOpen} accent="blue">Referensi</SectionHeading>
           <div className="space-y-3">
             {referensiList.map((item, i) => (
-              <Card key={i} className="border-slate-200 shadow-none">
-                <CardContent className="pt-4 pb-4 flex items-start gap-3">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-blue-50 text-blue-700 text-xs font-bold">
+              <Card key={i} className="border-slate-200 shadow-sm hover:shadow-md hover:border-blue-200 transition-all duration-200">
+                <CardContent className="pt-4 pb-4 flex items-start gap-4">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 text-sm font-black border border-blue-100">
                     {i + 1}
                   </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-slate-900">{item.title}</h3>
-                    <p className="text-xs text-slate-500">{item.author}</p>
-                    <p className="text-xs text-slate-400">{item.publisher}</p>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold text-slate-900 leading-snug">{item.title}</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">{item.author}</p>
+                    <p className="text-[11px] text-slate-400">{item.publisher}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -680,51 +821,76 @@ export default function App() {
         </motion.section>
 
         {/* ============================================================ */}
-        {/*  8. CARA MENGGUNAKAN                                          */}
+        {/*  8. CARA MENGGUNAKAN + COPY LINK                              */}
         {/* ============================================================ */}
 
         <motion.section
-          initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4 }}
+          initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
         >
-          <SectionHeading icon={Lightbulb}>Cara Menggunakan Website Ini</SectionHeading>
-          <Card className="border-slate-200 shadow-none bg-slate-50/50">
-            <CardContent className="pt-6">
-              <ol className="space-y-3">
-                {caraMenggunakan.map((item, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-xs font-bold mt-0.5">
-                      {i + 1}
-                    </div>
-                    <span className="text-sm text-slate-700 leading-relaxed">{item}</span>
-                  </li>
-                ))}
-              </ol>
-              <Separator className="my-4" />
-              <button
-                onClick={copyLink}
-                className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 transition-colors"
-              >
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                {copied ? "Link Disalin!" : "Salin Link Materi"}
-              </button>
-            </CardContent>
-          </Card>
+          <SectionHeading icon={Lightbulb} accent="cyan">Cara Menggunakan</SectionHeading>
+
+          <div className="grid gap-6 sm:grid-cols-2">
+            <Card className="border-slate-200 shadow-lg shadow-slate-100 bg-slate-50/50">
+              <CardContent className="pt-6">
+                <ol className="space-y-3">
+                  {caraMenggunakan.map((item, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white text-xs font-black mt-0.5 shadow-sm">
+                        {i + 1}
+                      </div>
+                      <span className="text-sm text-slate-700 leading-relaxed font-medium">{item}</span>
+                    </li>
+                  ))}
+                </ol>
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-200 shadow-lg shadow-slate-100 bg-gradient-to-br from-blue-50 to-white flex flex-col justify-center">
+              <CardContent className="pt-6 pb-6 text-center">
+                <GraduationCap className="h-8 w-8 mx-auto mb-3 text-blue-600" />
+                <p className="text-sm text-slate-500 mb-4">Bagikan halaman ini ke mahasiswa</p>
+                <button
+                  onClick={copyLink}
+                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                    copied
+                      ? "bg-emerald-500 text-white shadow-lg shadow-emerald-200"
+                      : "bg-blue-600 text-white shadow-lg shadow-blue-200 hover:shadow-xl hover:-translate-y-0.5"
+                  }`}
+                >
+                  {copied ? (
+                    <>
+                      <Check className="h-4 w-4" />
+                      Link Disalin!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4" />
+                      Salin Link Materi
+                    </>
+                  )}
+                </button>
+              </CardContent>
+            </Card>
+          </div>
         </motion.section>
 
         {/* ============================================================ */}
         {/*  9. FOOTER                                                     */}
         {/* ============================================================ */}
 
-        <footer className="border-t border-slate-200 pt-8">
-          <div className="flex flex-col items-center text-center space-y-1.5">
-            <p className="text-sm font-semibold text-slate-900">
+        <footer className="border-t-2 border-slate-100 pt-10">
+          <div className="flex flex-col items-center text-center space-y-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 text-white shadow-md mb-2">
+              <Cog className="h-5 w-5" />
+            </div>
+            <p className="text-base font-bold text-slate-900">
               Defris Hanindya Edwiyan Pradana, S.Pd., M.Pd.
             </p>
-            <p className="text-xs text-slate-500">Dosen Pendidikan Teknik Mesin</p>
-            <p className="text-xs text-slate-500">Universitas Negeri Medan</p>
-            <Separator className="my-3 max-w-xs" />
-            <div className="flex items-center gap-1.5 text-xs text-slate-400">
-              <Cog className="h-3 w-3" />
+            <p className="text-sm text-slate-500">Dosen Pendidikan Teknik Mesin</p>
+            <p className="text-sm text-slate-500">Universitas Negeri Medan</p>
+            <Separator className="my-4 max-w-xs" />
+            <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+              <Zap className="h-3 w-3" />
               <span>Gambar Mesin · MES6214 · 2025</span>
             </div>
           </div>
@@ -736,15 +902,20 @@ export default function App() {
       {/*  BACK TO TOP                                                     */}
       {/* ================================================================ */}
 
-      {showBackTop && (
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="fixed bottom-6 right-6 z-40 p-2.5 rounded-full bg-blue-600 text-white shadow-lg hover:bg-blue-700 transition-colors"
-          aria-label="Back to top"
-        >
-          <ArrowUp className="h-5 w-5" />
-        </button>
-      )}
+      <AnimatePresence>
+        {showBackTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="fixed bottom-6 right-6 z-40 p-3 rounded-full bg-slate-900 text-white shadow-xl hover:bg-blue-600 transition-colors"
+            aria-label="Back to top"
+          >
+            <ArrowUp className="h-5 w-5" />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
