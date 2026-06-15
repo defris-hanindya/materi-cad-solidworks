@@ -2,7 +2,7 @@
   "name": "materi-cad-solidworks",
   "private": true,
   "version": "0.0.0",
-  "homepage": "https://defrishanindya.github.io/materi-cad-solidworks",
+  "homepage": "https://defris-hanindya.github.io/materi-cad-solidworks",
   "type": "module",
   "scripts": {
     "dev": "vite",
